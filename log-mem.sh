@@ -20,7 +20,7 @@ while true; do
 
     pss=`grep -E '^Pss:' $rollup_cache | awk '{print $2}'`
     rss=`grep -E '^Rss:' $rollup_cache | awk '{print $2}'`
-    cmd=`head -n1 -z $procdir/cmdline | tr -d '\000' | awk '{print $1}'`
+    cmd=`cat $procdir/cmdline | tr '\000' ' '`
     echo $rss $pss $cmd >> $date
   done
   sleep $sleep_time

@@ -21,7 +21,12 @@ psses = {}
 for i in range(len(times)):
     cmds = {}
     for line in open(os.path.join(timesdir, str(times[i]))):
-        rss,pss,cmd = line.strip().split(' ')
+        rss,pss,cmd = line.strip().split(' ', 2)
+
+        # Truncate cmd
+        # XXX make configurable
+        cmd = cmd[:200]
+
         cmd_psses = psses.setdefault(cmd, [])
         cmd_psses.extend([0] * (i - len(cmd_psses) + 1))
         cmd_psses[-1] += int(pss)
