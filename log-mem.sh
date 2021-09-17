@@ -3,6 +3,8 @@
 set -euo pipefail
 
 rollup_cache=`mktemp`
+
+mkdir -p raw
 while true; do
   date=`date +%s`
   echo processing at $date
@@ -18,7 +20,7 @@ while true; do
     pss=`grep -E '^Pss:' $rollup_cache | awk '{print $2}'`
     rss=`grep -E '^Rss:' $rollup_cache | awk '{print $2}'`
     cmd=`head -n1 -z $procdir/cmdline | tr -d '\000' | awk '{print $1}'`
-    echo $rss $pss $cmd >> $date
+    echo $rss $pss $cmd >> raw/$date
   done
   sleep 5 
 done
