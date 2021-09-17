@@ -1,11 +1,13 @@
 #!/bin/bash
 
+# Every $1 seconds, logs RSS and PSS of ~every process to a file named after
+# the current unix time.
+
 set -euo pipefail
 
 sleep_time=$1
 rollup_cache=`mktemp`
 
-mkdir -p raw
 while true; do
   date=`date +%s`
   echo processing at $date
@@ -19,7 +21,7 @@ while true; do
     pss=`grep -E '^Pss:' $rollup_cache | awk '{print $2}'`
     rss=`grep -E '^Rss:' $rollup_cache | awk '{print $2}'`
     cmd=`head -n1 -z $procdir/cmdline | tr -d '\000' | awk '{print $1}'`
-    echo $rss $pss $cmd >> raw/$date
+    echo $rss $pss $cmd >> $date
   done
   sleep $sleep_time
 done
