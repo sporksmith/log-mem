@@ -29,21 +29,25 @@ for i in range(len(times)):
 
 times = list(map(lambda x: x - times[0], times))
 
-# filter to top N
+# Get list sorted by total "integral" of pss over time
 total_psses = []
 for cmd, cmd_psses in psses.items():
     total_psses.append((cmd, sum(cmd_psses)))
 total_psses.sort(key=lambda x: x[1], reverse=True)
-top_cmds = set(map(lambda x: x[0], total_psses[:10]))
 
-
-for cmd, cmd_psses in psses.items():
-    if cmd not in top_cmds:
-        continue
+# Plot top 10
+for (cmd, total) in total_psses[:10]:
+    # zero-extend, to handle commands that were no longer alive at end
+    cmd_psses = psses[cmd]
     cmd_psses.extend([0] * (len(times) - len(cmd_psses)))
+
+    # plot the line for this command
     plt.plot(times, cmd_psses, label=cmd)
 
+# Render the plot
 plt.legend()
+plt.xlabel('seconds')
+plt.ylabel('PSS KB')
 plt.show()
 
 #print(times)
