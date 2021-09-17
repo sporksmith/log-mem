@@ -2,6 +2,7 @@
 
 set -euo pipefail
 
+sleep_time=$1
 rollup_cache=`mktemp`
 
 mkdir -p raw
@@ -22,5 +23,5 @@ while true; do
     cmd=`head -n1 -z $procdir/cmdline | tr -d '\000' | awk '{print $1}'`
     echo $rss $pss $cmd >> raw/$date
   done
-  sleep 5 
+  sleep $sleep_time
 done
