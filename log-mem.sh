@@ -13,10 +13,8 @@ while true; do
     pid=`basename $procdir`
 
     # Test whether we can access. File permissions, and hence `test -r`, lie.
-    if ! head -c 1 $procdir/smaps_rollup &> /dev/null ; then continue; fi
-    
     # Get contents of rollup once; I think this takes a fair bit of processing in-kernel
-    cat $procdir/smaps_rollup > $rollup_cache
+    if ! cat $procdir/smaps_rollup > $rollup_cache 2> /dev/null ; then continue; fi
 
     pss=`grep -E '^Pss:' $rollup_cache | awk '{print $2}'`
     rss=`grep -E '^Rss:' $rollup_cache | awk '{print $2}'`
