@@ -13,7 +13,7 @@ timesdir = sys.argv[1]
 # Maximum number of commands to plot.
 num_to_plot = int(sys.argv[2])
 
-times = os.listdir('raw')
+times = os.listdir(timesdir)
 times = list(map(int, times))
 times.sort()
 
