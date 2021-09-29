@@ -18,6 +18,7 @@ class MemMapping(NamedTuple):
     size: int
     pss: int
     rss: int
+    referenced: int
 
 def merge(mappings):
     merged_mappings = []
@@ -33,7 +34,9 @@ def merge(mappings):
                     name=name,
                     size=sum([m.size for m in group]),
                     pss=sum([m.pss for m in group]),
-                    rss=sum([m.rss for m in group])))
+                    rss=sum([m.rss for m in group]),
+                    referenced=sum([m.referenced for m in group]),
+                    ))
     return merged_mappings
 
 def get_mappings_for_pid(pid, time):
@@ -56,6 +59,7 @@ def get_mappings_for_pid(pid, time):
     size_idx = labels.index('Size')
     pss_idx = labels.index('Pss')
     rss_idx = labels.index('Rss')
+    referenced_idx = labels.index('Referenced')
     flags_and_mapping_idx = labels.index('VmFlagsMapping')
 
     mappings = []
@@ -66,12 +70,17 @@ def get_mappings_for_pid(pid, time):
         size = int(mapline[size_idx])
         pss = int(mapline[pss_idx])
         rss = int(mapline[rss_idx])
+        referenced = int(mapline[referenced_idx])
 
         flags_and_mapping = mapline[flags_and_mapping_idx]
         name = mapline[flags_and_mapping_idx].split('  ')[1]
 
-        mapping = MemMapping(time=time, cmd=cmd, name=name, size=size, pss= pss, rss= rss)
+        mapping = MemMapping(time=time, cmd=cmd, name=name, size=size, pss= pss, rss= rss, referenced=referenced)
         mappings.append(mapping)
+
+    # Clear the 'referenced' bit
+    with open(f'/proc/{pid}/clear_refs', 'w') as clear_refs:
+        clear_refs.write('1')
 
     return merge(mappings)
 
@@ -96,7 +105,7 @@ def get_pids():
 if __name__ == '__main__':
     sleep_time = int(sys.argv[1])
 
-    csv_writer = csv.DictWriter(sys.stdout, ['time', 'cmd', 'name', 'size', 'pss', 'rss'])
+    csv_writer = csv.DictWriter(sys.stdout, ['time', 'cmd', 'name', 'size', 'pss', 'rss', 'referenced'])
     csv_writer.writeheader()
     while True:
         pids = get_pids()
