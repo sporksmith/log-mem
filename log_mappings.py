@@ -79,8 +79,11 @@ def get_mappings_for_pid(pid, time):
         mappings.append(mapping)
 
     # Clear the 'referenced' bit
-    with open(f'/proc/{pid}/clear_refs', 'w') as clear_refs:
-        clear_refs.write('1')
+    try:
+        with open(f'/proc/{pid}/clear_refs', 'w') as clear_refs:
+            clear_refs.write('1')
+    except:
+        print(f'warning: couldn\'t clear refs for pid {pid}', sys.stderr)
 
     return merge(mappings)
 
