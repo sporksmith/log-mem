@@ -15,6 +15,7 @@ class MemMapping(NamedTuple):
     time: int
     cmd: str
     name: str
+    size: int
     pss: int
     rss: int
 
@@ -24,13 +25,13 @@ def merge(mappings):
     mappings = mappings[:]
     mappings.sort(key=key_fn)
     for (mtime, cmd, name), group in itertools.groupby(mappings, key_fn):
-        #group = list(group)
-        #print(len(group))
+        group = list(group)
         merged_mappings.append(
                 MemMapping(
                     time=mtime,
                     cmd=cmd,
                     name=name,
+                    size=sum([m.size for m in group]),
                     pss=sum([m.pss for m in group]),
                     rss=sum([m.rss for m in group])))
     return merged_mappings
@@ -47,7 +48,12 @@ def get_mappings_for_pid(pid, time):
 
     lines = pmap.stdout.splitlines()
     cmd = ' '.join(lines[0].split()[1:])
-    labels = lines[1].split()
+    try:
+        labels = lines[1].split()
+    except:
+        return []
+
+    size_idx = labels.index('Size')
     pss_idx = labels.index('Pss')
     rss_idx = labels.index('Rss')
     flags_and_mapping_idx = labels.index('VmFlagsMapping')
@@ -57,13 +63,14 @@ def get_mappings_for_pid(pid, time):
         # Split, but careful not to split last field, VmFlagsMapping
         mapline = mapline.split(None, len(labels) - 1)
 
+        size = int(mapline[size_idx])
         pss = int(mapline[pss_idx])
         rss = int(mapline[rss_idx])
 
         flags_and_mapping = mapline[flags_and_mapping_idx]
         name = mapline[flags_and_mapping_idx].split('  ')[1]
 
-        mapping = MemMapping(time=time, cmd=cmd, name=name, pss= pss, rss= rss)
+        mapping = MemMapping(time=time, cmd=cmd, name=name, size=size, pss= pss, rss= rss)
         mappings.append(mapping)
 
     return merge(mappings)
@@ -86,20 +93,16 @@ def get_pids():
             stdout=subprocess.PIPE)
     return map(int, pmap.stdout.splitlines()[1:])
 
-def log_current_usage():
-    pids = get_pids()
-    mappings = get_mappings_for_pids(get_pids())
-
-    #csv_writer = csv.writer(sys.stdout)
-    csv_writer = csv.DictWriter(sys.stdout, ['time', 'cmd', 'name', 'pss', 'rss'])
-    csv_writer.writeheader()
-    for mapping in mappings:
-        csv_writer.writerow(mapping._asdict())
-    sys.stdout.flush()
-
 if __name__ == '__main__':
     sleep_time = int(sys.argv[1])
 
+    csv_writer = csv.DictWriter(sys.stdout, ['time', 'cmd', 'name', 'size', 'pss', 'rss'])
+    csv_writer.writeheader()
     while True:
-        log_current_usage()
+        pids = get_pids()
+        mappings = get_mappings_for_pids(get_pids())
+
+        for mapping in mappings:
+            csv_writer.writerow(mapping._asdict())
+        sys.stdout.flush()
         time.sleep(sleep_time)
