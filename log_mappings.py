@@ -42,7 +42,7 @@ def merge(mappings):
 def get_mappings_for_pid(pid, time):
     try:
         pmap = subprocess.run(
-                ['pmap', '-XX', str(pid)],
+                ['pmap', '-X', str(pid)],
                 universal_newlines=True,
                 check=True,
                 stdout=subprocess.PIPE)
@@ -60,7 +60,7 @@ def get_mappings_for_pid(pid, time):
     pss_idx = labels.index('Pss')
     rss_idx = labels.index('Rss')
     referenced_idx = labels.index('Referenced')
-    flags_and_mapping_idx = labels.index('VmFlagsMapping')
+    name_idx = labels.index('Mapping')
 
     mappings = []
     for mapline in lines[2:-2]:
@@ -72,8 +72,11 @@ def get_mappings_for_pid(pid, time):
         rss = int(mapline[rss_idx])
         referenced = int(mapline[referenced_idx])
 
-        flags_and_mapping = mapline[flags_and_mapping_idx]
-        name = mapline[flags_and_mapping_idx].split('  ')[1]
+        name = ''
+        try:
+            name = mapline[name_idx]
+        except IndexError:
+            pass
 
         mapping = MemMapping(time=time, cmd=cmd, name=name, size=size, pss= pss, rss= rss, referenced=referenced)
         mappings.append(mapping)
